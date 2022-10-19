@@ -1,0 +1,94 @@
+_schema-version: "3.2"
+ID: travel-approve-travelapprover
+description: A Fiori application.
+version: 0.0.1
+modules:
+- name: travel-approve-travelapprover-destination-content
+  type: com.sap.application.content
+  requires:
+  - name: travel-approve-travelapprover-destination-service
+    parameters:
+      content-target: true
+  - name: travel-approve-travelapprover-repo-host
+    parameters:
+      service-key:
+        name: travel-approve-travelapprover-repo-host-key
+  - name: travel-approve-travelapprover-uaa
+    parameters:
+      service-key:
+        name: travel-approve-travelapprover-uaa-key
+  parameters:
+    content:
+      instance:
+        destinations:
+        - Name: travel-approve-travelapprover_html_repo_host
+          ServiceInstanceName: travel-approve-travelapprover-html5-srv
+          ServiceKeyName: travel-approve-travelapprover-repo-host-key
+          sap.cloud.service: travel-approve-travelapprover
+        - Authentication: OAuth2UserTokenExchange
+          Name: travel-approve-travelapprover_uaa
+          ServiceInstanceName: travel-approve-travelapprover-xsuaa-srv
+          ServiceKeyName: travel-approve-travelapprover-uaa-key
+          sap.cloud.service: travel-approve-travelapprover
+        existing_destinations_policy: ignore
+  build-parameters:
+    no-source: true
+- name: travel-approve-travelapprover-app-content
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: travel-approve-travelapprover-repo-host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - travelapprovetravelapprover.zip
+      name: travelapprovetravelapprover
+      target-path: resources/
+- name: travelapprovetravelapprover
+  type: html5
+  path: .
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+resources:
+- name: travel-approve-travelapprover-destination-service
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      HTML5Runtime_enabled: true
+      init_data:
+        instance:
+          destinations:
+          - Authentication: NoAuthentication
+            Name: ui5
+            ProxyType: Internet
+            Type: HTTP
+            URL: https://ui5.sap.com
+          existing_destinations_policy: update
+      version: 1.0.0
+    service: destination
+    service-name: travel-approve-travelapprover-destination-service
+    service-plan: lite
+- name: travel-approve-travelapprover-uaa
+  type: org.cloudfoundry.managed-service
+  parameters:
+    path: ./xs-security.json
+    service: xsuaa
+    service-name: travel-approve-travelapprover-xsuaa-srv
+    service-plan: application
+- name: travel-approve-travelapprover-repo-host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-name: travel-approve-travelapprover-html5-srv
+    service-plan: app-host
+parameters:
+  deploy_mode: html5-repo
+  enable-parallel-deployments: true
